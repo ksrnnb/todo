@@ -11,32 +11,14 @@ http://localhost:8000 でトップページにアクセス
 docker-compose up -d
 ```
 
-または
-
-```
-. up.sh
-```
-
 ### Golangのコンテナに入る
 
 ```
 docker-compose exec golang ash
 ```
 
-または
-
-```
-. exec.sh
-```
-
 ### コンテナを立ち下げる
 
 ```
 docker-compose down
-```
-
-または
-
-```
-. down.sh
 ```
