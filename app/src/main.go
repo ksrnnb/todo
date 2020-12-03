@@ -9,6 +9,6 @@ func main() {
 		Addr: ":8000",
 	}
 
-	http.HandleFunc("/", top)
+	http.HandleFunc("/", handleRequest)
 	server.ListenAndServe()
 }
