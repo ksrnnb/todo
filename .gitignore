@@ -2,4 +2,6 @@ up.sh
 exec.sh
 down.sh
 /psql
-/app/src/github.com/
+/app/src/github.com
+/app/src/gorm.io
+/app/src/golang.org

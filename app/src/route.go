@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"net/http"
 	"strings"
-	"github.com/google/uuid"
 )
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
@@ -14,11 +14,11 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			index(w, r)
-		// case: "POST"
-		// 	create?
+			// case: "POST"
+			// 	create?
 		}
 	} else {
-	// e.g.: a272270a-34f7-11eb-a0cf-0242ac120003
+		// e.g.: a272270a-34f7-11eb-a0cf-0242ac120003
 		isUuid := isUuid(r.URL.Path)
 
 		if isUuid {
