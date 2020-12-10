@@ -1,0 +1,10 @@
+{{define "content"}}
+<h2>TODO PAGE</h2>
+
+<!-- TODO: csrf token -->
+<form action="{{ .UUID }}" method="post">
+
+    <input type="hidden" name="uuid" value="{{ .UUID }}">
+    <button type="submit">create item</button>
+</form>
+{{end}}
