@@ -7,9 +7,12 @@ import (
 
 // パスに応じて振り分け
 func handleRequest(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/" {
+	switch r.URL.Path {
+	case "/":
 		handleRoot(w, r)
-	} else {
+	case "/favicon.ico":
+		// nothing to do
+	default:
 		handleTodo(w, r)
 	}
 }

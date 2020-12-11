@@ -5,6 +5,13 @@
 <form action="{{ .UUID }}" method="post">
 
     <input type="hidden" name="uuid" value="{{ .UUID }}">
+    <input type="text" name="name">
     <button type="submit">create item</button>
+    {{ range $v, $item := .Items }}
+    <ul>
+        <li>{{ $item.Name }}</li>
+    </ul>
+    {{ else }}
+    {{ end }}
 </form>
 {{end}}

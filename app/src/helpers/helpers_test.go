@@ -1,4 +1,4 @@
-package main
+package helpers
 
 import (
 	"testing"
@@ -8,11 +8,11 @@ import (
 func TestIsUUIDFunction(t *testing.T) {
 	uuid := uuid.New().String()
 	
-	if ! isUUID(uuid) {
+	if ! IsUUID(uuid) {
 		t.Errorf("isUUID function is wrong because arg is uuid but it returns false")
 	}
 
-	if isUUID("string_test") {
+	if IsUUID("string_test") {
 		t.Errorf("isUUID function is wrong because arg isn't uuid but it returns true")
 	}
 }

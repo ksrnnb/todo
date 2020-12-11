@@ -8,15 +8,16 @@ import (
 	"helpers"
 	"strings"
 	"errors"
+	"regexp"
 	"log"
 )
 
-func parseFiles() *template.Template{
+func displayTodoPage(w http.ResponseWriter, todo models.Todo) {
 	t, _ := template.ParseFiles(
 		"templates/layout.html",
 		"templates/todo.html")
 
-	return t
+	t.ExecuteTemplate(w, "layout", todo)
 }
 
 // todoページの表示
@@ -25,40 +26,71 @@ func ShowItem(w http.ResponseWriter, r *http.Request) {
 	err := validateShowRequest(r)
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		Error(w, r)
+		return
 	}
 
-	t := parseFiles()
-	action := getAction(r)
-
 	var todo models.Todo
-	models.Db.Where("uuid=?", action).First(&todo)
+	path := getPath(r)
+	models.Db.Where("uuid=?", path).Preload("Items").Find(&todo)
 
-	t.ExecuteTemplate(w, "layout", todo)
+	displayTodoPage(w, todo)
 }
 
 // validation for show item
 func validateShowRequest(r *http.Request) error {
-	isUUID := helpers.IsUUID(getAction(r))
+	isUUID := helpers.IsUUID(getPath(r))
 
-	fmt.Println(getAction(r))
 	if isUUID {
 		return nil
 	}
 
-	// TODO: faviconのリクエストでここに引っかかっている！
 	return errors.New("パスがuuidではありません")
 }
 
 // itemの作成
 func CreateItem(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("POST!")
+	err := validateCreateItemRequest(r)
+
+	if err != nil {
+		log.Println(err)
+		Error(w, r)
+		return
+	}
+
+	var todo models.Todo
+	path := getPath(r)
+	models.Db.Where("uuid=?", path).First(&todo)
+
+	item := models.Item{Todo: todo, Name: r.PostFormValue("name")}
+	models.Db.Create(&item)
+
+	// Todo表示ページへ
+	http.Redirect(w, r, r.URL.Path, http.StatusMovedPermanently)
+}
+
+// validation for create item
+func validateCreateItemRequest(r *http.Request) error {
+	r.ParseForm()
+	inputs := r.PostForm
+
+	isUUID := helpers.IsUUID(inputs["uuid"][0])
+
+	name := inputs["name"][0]
+	nameIsValidated, _ := regexp.MatchString(`\A[[:^cntrl:]]*\z`, name)
+
+	if isUUID && nameIsValidated {
+		return nil
+	}
+
+	return errors.New("不正な入力です")
 }
 
 func Error(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "error")
 }
 
-func getAction(r *http.Request) string {
+func getPath(r *http.Request) string {
 	return strings.TrimLeft(r.URL.Path, "/")
 }
