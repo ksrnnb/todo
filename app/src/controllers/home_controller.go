@@ -2,15 +2,16 @@ package controllers
 
 import (
 	"fmt"
-	"net/http"
 	"html/template"
+	"net/http"
+
+	"models"
+	"session"
 
 	"github.com/google/uuid"
-	"models"
-	"helpers"
 )
 
-// top page
+// Index is top page action shows top page
 func Index(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("templates/index.html")
 
@@ -18,21 +19,15 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
-	uuid := uuid.New().String()
-
-	tmpl.Execute(w, uuid)
+	token := session.Start(w, r)
+	tmpl.Execute(w, token)
 }
 
-// todo listを作成し、todoページを表示する
+// CreateTodo creates Todo and shows todo page
 func CreateTodo(w http.ResponseWriter, r *http.Request) {
-	uuid := r.PostFormValue("uuid")
-	if helpers.IsUUID(uuid) {
-		todo := models.Todo{UUID: uuid}
-		models.Db.Create(&todo)
+	uuid := uuid.New().String()
+	todo := models.Todo{UUID: uuid}
+	models.Db.Create(&todo)
 
-		// token := r.PostFormValue("_token")
-		http.Redirect(w, r, "/" + uuid, http.StatusMovedPermanently)
-	} else {
-		http.Error(w, "post parameter is wrong", http.StatusUnprocessableEntity)
-	}
+	http.Redirect(w, r, "/"+uuid, http.StatusMovedPermanently)
 }

@@ -5,3 +5,4 @@ down.sh
 /app/src/github.com
 /app/src/gorm.io
 /app/src/golang.org
+/app/src/go.opentelemetry.io

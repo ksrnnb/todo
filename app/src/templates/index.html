@@ -8,10 +8,8 @@
 </head>
 
 <body>
-
-    <!-- TODO: csrf token -->
     <form action="/" method="post">
-        <input type="hidden" name="uuid" value="{{ . }}">
+        <input type="hidden" name="_token" value="{{ . }}">
         <button type="submit">make todo list</button>
     </form>
 </body>

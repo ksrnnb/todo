@@ -20,3 +20,8 @@ services:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+
+  redis:
+    image: redis:6.0.9-alpine3.12
+    ports:
+      - "6379:6379"
