@@ -1,8 +1,9 @@
 package main
 
 import (
-	"net/http"
 	"controllers"
+	"middleware"
+	"net/http"
 )
 
 // パスに応じて振り分け
@@ -22,7 +23,7 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		controllers.Index(w, r)
 	case "POST":
-		controllers.CreateTodo(w, r)
+		controllers.CreateTodo(middleware.Csrf(w, r))
 	}
 }
 
@@ -32,6 +33,6 @@ func handleTodo(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		controllers.ShowItem(w, r)
 	case "POST":
-		controllers.CreateItem(w, r)
+		controllers.CreateItem(middleware.Csrf(w, r))
 	}
 }

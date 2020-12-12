@@ -3,10 +3,11 @@ package main
 import (
 	"models"
 	"net/http"
-
+	"redis"
 )
 
 func init() {
+	redis.Initialize()
 	models.Initialize()
 }
 
