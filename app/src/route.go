@@ -2,18 +2,19 @@ package main
 
 import (
 	"controllers"
+	"helpers"
 	"middleware"
 	"net/http"
 )
 
 // パスに応じて振り分け
 func handleRequest(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/":
+	path := helpers.GetPath(r)
+
+	switch {
+	case path == "": // top page
 		handleRoot(w, r)
-	case "/favicon.ico":
-		// nothing to do
-	default:
+	case helpers.IsUUID(path): // todo page
 		handleTodo(w, r)
 	}
 }

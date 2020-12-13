@@ -1,26 +1,32 @@
 package controllers
 
 import (
-	"fmt"
-	"net/http"
-	"html/template"
-	"models"
-	"helpers"
-	"strings"
 	"errors"
-	"regexp"
+	"fmt"
+	"helpers"
+	"html/template"
 	"log"
+	"models"
+	"net/http"
+	"regexp"
+	"session"
 )
 
-func displayTodoPage(w http.ResponseWriter, todo models.Todo) {
+// ExecuteTemplateに渡すために構造体にまとめる
+type paramsStruct struct {
+	Token string
+	Todo  models.Todo
+}
+
+func displayTodoPage(w http.ResponseWriter, params paramsStruct) {
 	t, _ := template.ParseFiles(
 		"templates/layout.html",
 		"templates/todo.html")
 
-	t.ExecuteTemplate(w, "layout", todo)
+	t.ExecuteTemplate(w, "layout", params)
 }
 
-// todoページの表示
+// ShowItem shows todo page
 func ShowItem(w http.ResponseWriter, r *http.Request) {
 	// e.g.: a272270a-34f7-11eb-a0cf-0242ac120003
 	err := validateShowRequest(r)
@@ -32,15 +38,22 @@ func ShowItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var todo models.Todo
-	path := getPath(r)
+	path := helpers.GetPath(r)
 	models.Db.Where("uuid=?", path).Preload("Items").Find(&todo)
 
-	displayTodoPage(w, todo)
+	token := session.Start(w, r)
+
+	params := paramsStruct{
+		Token: token,
+		Todo:  todo,
+	}
+
+	displayTodoPage(w, params)
 }
 
 // validation for show item
 func validateShowRequest(r *http.Request) error {
-	isUUID := helpers.IsUUID(getPath(r))
+	isUUID := helpers.IsUUID(helpers.GetPath(r))
 
 	if isUUID {
 		return nil
@@ -49,7 +62,7 @@ func validateShowRequest(r *http.Request) error {
 	return errors.New("パスがuuidではありません")
 }
 
-// itemの作成
+// CreateItem creates new todo item
 func CreateItem(w http.ResponseWriter, r *http.Request) {
 	err := validateCreateItemRequest(r)
 
@@ -60,7 +73,7 @@ func CreateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var todo models.Todo
-	path := getPath(r)
+	path := helpers.GetPath(r)
 	models.Db.Where("uuid=?", path).First(&todo)
 
 	item := models.Item{Todo: todo, Name: r.PostFormValue("name")}
@@ -87,10 +100,7 @@ func validateCreateItemRequest(r *http.Request) error {
 	return errors.New("不正な入力です")
 }
 
+// Error shows error page
 func Error(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "error")
-}
-
-func getPath(r *http.Request) string {
-	return strings.TrimLeft(r.URL.Path, "/")
 }

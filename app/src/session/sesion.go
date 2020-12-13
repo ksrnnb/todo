@@ -1,26 +1,37 @@
 package session
 
 import (
-	"fmt"
 	"helpers"
 	"net/http"
 	"redis"
 )
 
 // Start starts session if it doesn't start
+// TODO: セッション固定化対策は大丈夫か？　要確認
 func Start(w http.ResponseWriter, r *http.Request) (token string) {
 	sessionCookie, err := r.Cookie("sessionID")
 
 	// cookieがない場合
 	if err != nil {
-		sessionID, token := createToken()
-		storeToken(sessionID, token)
-		setCookieSessionID(w, sessionID)
-
-		return token
+		return getNewToken(w)
 	}
 
-	token = getToken(sessionCookie.Value)
+	token, err = getTokenFromRedis(sessionCookie.Value)
+
+	// cookieは設定されているけれど、tokenが見つからない場合
+	if err != nil {
+		return getNewToken(w)
+	}
+
+	return token
+}
+
+// getNewToken creates new token and set sessionID
+func getNewToken(w http.ResponseWriter) (token string) {
+	sessionID, token := createToken()
+	storeToken(sessionID, token)
+	setCookieSessionID(w, sessionID)
+
 	return token
 }
 
@@ -53,15 +64,9 @@ func storeToken(sessionID string, token string) {
 	redis.StoreToken(sessionID, token)
 }
 
-// getToken gets csrf token
-func getToken(sessionID string) (token string) {
-	token, err := redis.GetToken(sessionID)
+// getTokenFromRedis gets csrf token
+func getTokenFromRedis(sessionID string) (token string, err error) {
+	token, err = redis.GetToken(sessionID)
 
-	// TODO: これでいいか要確認
-	if err != nil {
-		fmt.Println("csrfトークンが取得できませんでした")
-		return
-	}
-
-	return token
+	return
 }

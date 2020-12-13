@@ -1,17 +1,18 @@
 {{define "content"}}
 <h2>TODO PAGE</h2>
+<form action="{{ .Todo.UUID }}" method="post">
 
-<!-- TODO: csrf token -->
-<form action="{{ .UUID }}" method="post">
-
-    <input type="hidden" name="uuid" value="{{ .UUID }}">
+    <input type="hidden" name="_token" value="{{ .Token }}">
+    <input type="hidden" name="uuid" value="{{ .Todo.UUID }}">
     <input type="text" name="name">
     <button type="submit">create item</button>
-    {{ range $v, $item := .Items }}
+    {{ range $v, $item := .Todo.Items }}
     <ul>
         <li>{{ $item.Name }}</li>
     </ul>
     {{ else }}
     {{ end }}
 </form>
+
+<script src="typescript/todo.js"></script>
 {{end}}
