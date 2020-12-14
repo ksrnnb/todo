@@ -8,3 +8,7 @@ type Item struct {
 	Name   string `gorm:"not null"`
 	Done   bool   `gorm:"default:false;not null"`
 }
+
+func (item Item) Delete() {
+	Db.Delete(&item)
+}

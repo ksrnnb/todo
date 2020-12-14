@@ -12,19 +12,19 @@ func Csrf(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *http.Re
 	sessionID := sessionCookie.Value
 
 	if err != nil {
-		log.Fatalln("session doesn't exist")
+		log.Println("session doesn't exist")
 	}
 
 	csrfTokenRedis, err := redis.GetToken(sessionID)
 
 	if err != nil {
-		log.Fatalln("token couldn't find")
+		log.Println("token couldn't find")
 	}
 
 	csrfTokenForm := r.PostFormValue("_token")
 
 	if csrfTokenRedis != csrfTokenForm {
-		log.Fatalln("token didn't match")
+		log.Println("token didn't match")
 	}
 
 	return w, r

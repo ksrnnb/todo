@@ -1,18 +1,29 @@
 {{define "content"}}
 <h2>TODO PAGE</h2>
-<form action="{{ .Todo.UUID }}" method="post">
 
-    <input type="hidden" name="_token" value="{{ .Token }}">
-    <input type="hidden" name="uuid" value="{{ .Todo.UUID }}">
+{{ $todo := .Todo }}
+{{ $token := .Token }}
+<form action="{{ $todo.UUID }}" method="post">
+
+    <input type="hidden" name="_token" value="{{ $token }}">
+    <input type="hidden" name="uuid" value="{{ $todo.UUID }}">
     <input type="text" name="name">
     <button type="submit">create item</button>
-    {{ range $v, $item := .Todo.Items }}
-    <ul>
-        <li>{{ $item.Name }}</li>
-    </ul>
-    {{ else }}
-    {{ end }}
 </form>
+<ul>
+    {{ range $v, $item := $todo.Items }}
+    <form action="{{ $todo.UUID }}" method="post">
+        <li>
+            {{ $item.Name }}
+            <input type="hidden" name="_token" value="{{ $token }}">
+            <input type="hidden" name="_method" value="DELETE">
+            <input type="hidden" name="id" value="{{$item.ID}}">
+            <button class="delete-button">delete</button>
+        </li>
+    </form>
+    {{ else }}
+</ul>
+{{ end }}
 
-<script src="typescript/todo.js"></script>
+<script src="/assets/ts/todo.js"></script>
 {{end}}

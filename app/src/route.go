@@ -34,6 +34,13 @@ func handleTodo(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		controllers.ShowItem(w, r)
 	case "POST":
-		controllers.CreateItem(middleware.Csrf(w, r))
+		switch r.PostFormValue("_method") {
+		// 指定なし create item
+		case "":
+			controllers.CreateItem(middleware.Csrf(w, r))
+		// DELETEを指定 delete item
+		case "DELETE":
+			controllers.DeleteItem(middleware.Csrf(w, r))
+		}
 	}
 }

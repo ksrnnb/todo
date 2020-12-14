@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"regexp"
 	"session"
+	"strconv"
 )
 
 // ExecuteTemplateに渡すために構造体にまとめる
@@ -37,11 +38,9 @@ func ShowItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var todo models.Todo
-	path := helpers.GetPath(r)
-	models.Db.Where("uuid=?", path).Preload("Items").Find(&todo)
-
 	token := session.Start(w, r)
+	uuid := helpers.GetPath(r)
+	todo := models.FindTodoWithItems(uuid)
 
 	params := paramsStruct{
 		Token: token,
@@ -79,25 +78,56 @@ func CreateItem(w http.ResponseWriter, r *http.Request) {
 	item := models.Item{Todo: todo, Name: r.PostFormValue("name")}
 	models.Db.Create(&item)
 
-	// Todo表示ページへ
-	http.Redirect(w, r, r.URL.Path, http.StatusMovedPermanently)
+	redirectTodo(w, r)
 }
 
 // validation for create item
 func validateCreateItemRequest(r *http.Request) error {
-	r.ParseForm()
-	inputs := r.PostForm
-
-	isUUID := helpers.IsUUID(inputs["uuid"][0])
-
-	name := inputs["name"][0]
+	name := r.PostFormValue("name")
 	nameIsValidated, _ := regexp.MatchString(`\A[[:^cntrl:]]*\z`, name)
 
-	if isUUID && nameIsValidated {
-		return nil
+	if !nameIsValidated {
+		return errors.New("不正な入力です")
 	}
 
-	return errors.New("不正な入力です")
+	return nil
+}
+
+// DeleteItem deletes item
+func DeleteItem(w http.ResponseWriter, r *http.Request) {
+	// handlerでuuidは確認済
+	id, err := validateDeleteItem(r)
+	uuid := helpers.GetPath(r)
+
+	if err != nil {
+		log.Println(err)
+		Error(w, r)
+		return
+	}
+
+	deleteIfExists(id, uuid)
+
+	redirectTodo(w, r)
+}
+
+// validation - id is number
+func validateDeleteItem(r *http.Request) (id int, err error) {
+	id, err = strconv.Atoi(r.PostFormValue("id"))
+	return
+}
+
+// confirm whether todo has item or not and delete it if it exits
+func deleteIfExists(id int, uuid string) {
+	todo := models.FindTodoWithItems(uuid)
+	item, found := todo.GetItem(id)
+
+	if found {
+		item.Delete()
+	}
+}
+
+func redirectTodo(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, r.URL.Path, http.StatusMovedPermanently)
 }
 
 // Error shows error page
