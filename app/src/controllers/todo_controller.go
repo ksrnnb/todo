@@ -1,26 +1,33 @@
 package controllers
 
 import (
-	"fmt"
-	"net/http"
-	"html/template"
-	"models"
-	"helpers"
-	"strings"
 	"errors"
-	"regexp"
+	"fmt"
+	"helpers"
+	"html/template"
 	"log"
+	"models"
+	"net/http"
+	"regexp"
+	"session"
+	"strconv"
 )
 
-func displayTodoPage(w http.ResponseWriter, todo models.Todo) {
+// ExecuteTemplateに渡すために構造体にまとめる
+type paramsStruct struct {
+	Token string
+	Todo  models.Todo
+}
+
+func displayTodoPage(w http.ResponseWriter, params paramsStruct) {
 	t, _ := template.ParseFiles(
 		"templates/layout.html",
 		"templates/todo.html")
 
-	t.ExecuteTemplate(w, "layout", todo)
+	t.ExecuteTemplate(w, "layout", params)
 }
 
-// todoページの表示
+// ShowItem shows todo page
 func ShowItem(w http.ResponseWriter, r *http.Request) {
 	// e.g.: a272270a-34f7-11eb-a0cf-0242ac120003
 	err := validateShowRequest(r)
@@ -31,16 +38,21 @@ func ShowItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var todo models.Todo
-	path := getPath(r)
-	models.Db.Where("uuid=?", path).Preload("Items").Find(&todo)
+	token := session.Start(w, r)
+	uuid := helpers.GetPath(r)
+	todo := models.FindTodoWithItems(uuid)
 
-	displayTodoPage(w, todo)
+	params := paramsStruct{
+		Token: token,
+		Todo:  todo,
+	}
+
+	displayTodoPage(w, params)
 }
 
 // validation for show item
 func validateShowRequest(r *http.Request) error {
-	isUUID := helpers.IsUUID(getPath(r))
+	isUUID := helpers.IsUUID(helpers.GetPath(r))
 
 	if isUUID {
 		return nil
@@ -49,7 +61,7 @@ func validateShowRequest(r *http.Request) error {
 	return errors.New("パスがuuidではありません")
 }
 
-// itemの作成
+// CreateItem creates new todo item
 func CreateItem(w http.ResponseWriter, r *http.Request) {
 	err := validateCreateItemRequest(r)
 
@@ -60,37 +72,65 @@ func CreateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var todo models.Todo
-	path := getPath(r)
+	path := helpers.GetPath(r)
 	models.Db.Where("uuid=?", path).First(&todo)
 
 	item := models.Item{Todo: todo, Name: r.PostFormValue("name")}
 	models.Db.Create(&item)
 
-	// Todo表示ページへ
-	http.Redirect(w, r, r.URL.Path, http.StatusMovedPermanently)
+	redirectTodo(w, r)
 }
 
 // validation for create item
 func validateCreateItemRequest(r *http.Request) error {
-	r.ParseForm()
-	inputs := r.PostForm
-
-	isUUID := helpers.IsUUID(inputs["uuid"][0])
-
-	name := inputs["name"][0]
+	name := r.PostFormValue("name")
 	nameIsValidated, _ := regexp.MatchString(`\A[[:^cntrl:]]*\z`, name)
 
-	if isUUID && nameIsValidated {
-		return nil
+	if !nameIsValidated {
+		return errors.New("不正な入力です")
 	}
 
-	return errors.New("不正な入力です")
+	return nil
 }
 
+// DeleteItem deletes item
+func DeleteItem(w http.ResponseWriter, r *http.Request) {
+	// handlerでuuidは確認済
+	id, err := validateDeleteItem(r)
+	uuid := helpers.GetPath(r)
+
+	if err != nil {
+		log.Println(err)
+		Error(w, r)
+		return
+	}
+
+	deleteIfExists(id, uuid)
+
+	redirectTodo(w, r)
+}
+
+// validation - id is number
+func validateDeleteItem(r *http.Request) (id int, err error) {
+	id, err = strconv.Atoi(r.PostFormValue("id"))
+	return
+}
+
+// confirm whether todo has item or not and delete it if it exits
+func deleteIfExists(id int, uuid string) {
+	todo := models.FindTodoWithItems(uuid)
+	item, found := todo.GetItem(id)
+
+	if found {
+		item.Delete()
+	}
+}
+
+func redirectTodo(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, r.URL.Path, http.StatusMovedPermanently)
+}
+
+// Error shows error page
 func Error(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "error")
-}
-
-func getPath(r *http.Request) string {
-	return strings.TrimLeft(r.URL.Path, "/")
 }

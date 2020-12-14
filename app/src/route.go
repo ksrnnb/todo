@@ -2,18 +2,19 @@ package main
 
 import (
 	"controllers"
+	"helpers"
 	"middleware"
 	"net/http"
 )
 
 // パスに応じて振り分け
 func handleRequest(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/":
+	path := helpers.GetPath(r)
+
+	switch {
+	case path == "": // top page
 		handleRoot(w, r)
-	case "/favicon.ico":
-		// nothing to do
-	default:
+	case helpers.IsUUID(path): // todo page
 		handleTodo(w, r)
 	}
 }
@@ -33,6 +34,13 @@ func handleTodo(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		controllers.ShowItem(w, r)
 	case "POST":
-		controllers.CreateItem(middleware.Csrf(w, r))
+		switch r.PostFormValue("_method") {
+		// 指定なし create item
+		case "":
+			controllers.CreateItem(middleware.Csrf(w, r))
+		// DELETEを指定 delete item
+		case "DELETE":
+			controllers.DeleteItem(middleware.Csrf(w, r))
+		}
 	}
 }

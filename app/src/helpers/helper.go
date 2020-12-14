@@ -1,29 +1,33 @@
 package helpers
 
 import (
-	"github.com/google/uuid"
 	"crypto/rand"
 	"math/big"
+	"net/http"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
-// uuidかどうかを判定
+// IsUUID judges argumets is uuid or not
 func IsUUID(str string) bool {
 	_, err := uuid.Parse(str)
 
 	return err == nil
 }
 
+// CreateRandomString32 creates random 32 digit string
 func CreateRandomString32() string {
 	seed := "abcdefghijklmnopqlstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	seed_len := big.NewInt(int64(len(seed)))
+	seedLength := big.NewInt(int64(len(seed)))
 	// len(seed) returns int
 	// big.NewInt(int64) returns big.Int
-	
-	var token string
-	token_len := 32
 
-	for i := 0; i < token_len; i++ {
-		randomBigInt, _ := rand.Int(rand.Reader, seed_len)
+	var token string
+	tokenLength := 32
+
+	for i := 0; i < tokenLength; i++ {
+		randomBigInt, _ := rand.Int(rand.Reader, seedLength)
 		// rand.Int(io.Reader, big.Int) returns big.Int
 
 		token = token + string(seed[randomBigInt.Int64()])
@@ -31,4 +35,9 @@ func CreateRandomString32() string {
 	}
 
 	return token
+}
+
+// GetPath remove first slash /
+func GetPath(r *http.Request) string {
+	return strings.TrimLeft(r.URL.Path, "/")
 }

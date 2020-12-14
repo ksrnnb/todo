@@ -7,8 +7,11 @@ RUN export GOPATH=/var/golang       \
     gcc                             \
     git                             \
     musl-dev                        \
+    npm                             \
     postgresql                      \
-    vim
+    vim                             \
+    && npm install -g               \
+    typescript
 # gcc: go test
 # musl-dev: standard library for go test
 
