@@ -133,7 +133,18 @@ func getItemName(r *http.Request) (name string, err error) {
 
 // HandleItemDone inverts item done
 func HandleItemDone(w http.ResponseWriter, r *http.Request) {
+	id, err := getID(r)
+	uuid := helpers.GetPath(r)
 
+	if err != nil {
+		log.Println(err)
+		Error(w, r)
+		return
+	}
+
+	models.UpdateItemDone(id, uuid)
+
+	redirectTodo(w, r)
 }
 
 // DeleteItem deletes item

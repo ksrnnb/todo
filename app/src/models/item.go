@@ -2,8 +2,8 @@ package models
 
 // Item model
 type Item struct {
-	ID     int `gorm:"primaryKey"`
-	TodoID int `gorm:"not null"`
+	ID     int    `gorm:"primaryKey"`
+	TodoID int    `gorm:"not null"`
 	Todo   Todo
 	Name   string `gorm:"not null"`
 	Done   bool   `gorm:"default:false;not null"`
@@ -34,6 +34,16 @@ func UpdateItemName(id int, uuid string, name string) {
 
 	if found {
 		item.Name = name
+		item.Save()
+	}
+}
+
+func UpdateItemDone(id int, uuid string) {
+	todo := FindTodoWithItems(uuid)
+	item, found := todo.GetItem(id)
+
+	if found {
+		item.Done = !item.Done
 		item.Save()
 	}
 }
