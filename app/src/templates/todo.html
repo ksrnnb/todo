@@ -23,6 +23,9 @@
 
             <button class="item-button" data-method="PUT">edit</button>
             <button class="item-button" data-method="DELETE">delete</button>
+            {{ if $item.Done }}
+            DONE!
+            {{ end }}
         </form>
     </li>
     {{ else }}
