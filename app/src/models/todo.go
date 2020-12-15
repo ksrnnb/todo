@@ -1,5 +1,9 @@
 package models
 
+import (
+	"github.com/google/uuid"
+)
+
 // Todo model
 type Todo struct {
 	ID    int    `gorm:"primaryKey"`
@@ -31,6 +35,14 @@ func (todo Todo) GetItem(id int) (item Item, found bool) {
 	}
 
 	return item, found
+}
+
+func CreateNewTodo() (todo Todo) {
+	uuid := uuid.New().String()
+	todo = Todo{UUID: uuid}
+	todo.Create()
+
+	return todo
 }
 
 // FindTodo finds todo without items

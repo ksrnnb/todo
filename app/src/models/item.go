@@ -47,3 +47,13 @@ func UpdateItemDone(id int, uuid string) {
 		item.Save()
 	}
 }
+
+// confirm whether todo has item or not and delete it if it exits
+func DeleteItem(id int, uuid string) {
+	todo := FindTodoWithItems(uuid)
+	item, found := todo.GetItem(id)
+
+	if found {
+		item.Delete()
+	}
+}
