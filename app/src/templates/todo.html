@@ -3,8 +3,8 @@
 
 {{ $todo := .Todo }}
 {{ $token := .Token }}
+<!-- TODO: tokenをmetaタグにまとめれない？ -->
 <form action="{{ $todo.UUID }}" method="post">
-
     <input type="hidden" name="_token" value="{{ $token }}">
     <input type="hidden" name="uuid" value="{{ $todo.UUID }}">
     <input type="text" name="name">
@@ -12,15 +12,19 @@
 </form>
 <ul>
     {{ range $v, $item := $todo.Items }}
-    <form action="{{ $todo.UUID }}" method="post">
-        <li>
-            {{ $item.Name }}
+    <li>
+        <form class="inline" action="{{ $todo.UUID }}" method="post">
             <input type="hidden" name="_token" value="{{ $token }}">
-            <input type="hidden" name="_method" value="DELETE">
             <input type="hidden" name="id" value="{{$item.ID}}">
-            <button class="delete-button">delete</button>
-        </li>
-    </form>
+
+            <button class="item-button" data-method="DONE">DONE</button>
+
+            <input type="text" name="name" value="{{ $item.Name }}">
+
+            <button class="item-button" data-method="PUT">edit</button>
+            <button class="item-button" data-method="DELETE">delete</button>
+        </form>
+    </li>
     {{ else }}
 </ul>
 {{ end }}

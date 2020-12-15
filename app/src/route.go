@@ -41,6 +41,10 @@ func handleTodo(w http.ResponseWriter, r *http.Request) {
 		// DELETEを指定 delete item
 		case "DELETE":
 			controllers.DeleteItem(middleware.Csrf(w, r))
+		case "PUT":
+			controllers.EditItemName(middleware.Csrf(w, r))
+		case "DONE":
+			controllers.HandleItemDone(middleware.Csrf(w, r))
 		}
 	}
 }
