@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/google/uuid"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
-	"os"
-	"github.com/google/uuid"
 )
 
 // メイン
@@ -39,7 +39,7 @@ func TestRedirectToTodoPage(t *testing.T) {
 	writer := httptest.NewRecorder()
 	uuid := uuid.New().String()
 	param := strings.NewReader("uuid=" + uuid)
-	
+
 	request, _ := http.NewRequest("POST", "/", param)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	mux.ServeHTTP(writer, request)
@@ -52,7 +52,7 @@ func TestValidatePostUUID(t *testing.T) {
 	writer := httptest.NewRecorder()
 	notUUID := "test_string"
 	param := strings.NewReader("uuid=" + notUUID)
-	
+
 	request, _ := http.NewRequest("POST", "/", param)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	mux.ServeHTTP(writer, request)
@@ -64,7 +64,7 @@ func TestValidatePostUUID(t *testing.T) {
 func containsCheck(t *testing.T, writer *httptest.ResponseRecorder, str string) {
 	// writer.Body type: *bytes.Buffer
 	contains := strings.Contains(writer.Body.String(), str)
-	
+
 	if !contains {
 		t.Errorf(`Cannot see %s`, str)
 	}

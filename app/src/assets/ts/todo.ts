@@ -1,14 +1,19 @@
-// const deleteButtons = document.getElementsByClassName("delete-button");
 
-// const onclickbtn = e => {
-//     console.log(e);
-//     // e.preventDefault();
+function setMethod() {
+    const itemButtons = document.getElementsByClassName("item-button");
 
-//     // const id = e.target.dataset.itemid;
+    const setMethodInput = e => {
+        const input = document.createElement("input");
+        input.setAttribute("name", "_method");
+        input.setAttribute("type", "hidden");
+        input.setAttribute("value", e.target.dataset.method);
 
-// }
+        e.target.parentNode.appendChild(input);
+    }
 
-// Object.keys(deleteButtons).forEach(i => {
-//     deleteButtons[i].onclick = onclickbtn;
+    Object.keys(itemButtons).forEach(i => {
+        itemButtons[i].onclick = setMethodInput;
+    });
+}
 
-// });
+setMethod();

@@ -7,6 +7,18 @@ type Todo struct {
 	Items []Item
 }
 
+func (todo Todo) Create() {
+	Db.Create(&todo)
+}
+
+func (todo Todo) Save() {
+	Db.Save(&todo)
+}
+
+func (todo Todo) Delete() {
+	Db.Delete(&todo)
+}
+
 // HasItem check whether Todo struct has item or not by item id
 func (todo Todo) GetItem(id int) (item Item, found bool) {
 	found = false
@@ -21,9 +33,14 @@ func (todo Todo) GetItem(id int) (item Item, found bool) {
 	return item, found
 }
 
+// FindTodo finds todo without items
+func FindTodo(uuid string) (todo Todo) {
+	Db.Where("uuid=?", uuid).First(&todo)
+	return todo
+}
+
 // FindTodoWithItems finds todo with related items
-func FindTodoWithItems(uuid string) Todo {
-	var todo Todo
+func FindTodoWithItems(uuid string) (todo Todo) {
 	Db.Where("uuid=?", uuid).Preload("Items").Find(&todo)
 	return todo
 }
