@@ -1,25 +1,22 @@
 package controllers
 
 import (
-	"errors"
-	"fmt"
 	"helpers"
 	"html/template"
-	"log"
 	"models"
 	"net/http"
-	"regexp"
 	"session"
 	"strconv"
+	"validations"
 )
 
 // ExecuteTemplateに渡すために構造体にまとめる
-type paramsStruct struct {
+type templateParam struct {
 	Token string
 	Todo  models.Todo
 }
 
-func displayTodoPage(w http.ResponseWriter, params paramsStruct) {
+func displayTodoPage(w http.ResponseWriter, params templateParam) {
 	t, _ := template.ParseFiles(
 		"templates/layout.html",
 		"templates/todo.html")
@@ -30,11 +27,10 @@ func displayTodoPage(w http.ResponseWriter, params paramsStruct) {
 // ShowItem shows todo page
 func ShowItem(w http.ResponseWriter, r *http.Request) {
 	// e.g.: a272270a-34f7-11eb-a0cf-0242ac120003
-	err := validateShowRequest(r)
+	validated := validations.ValidateShowItem(r)
 
-	if err != nil {
-		log.Println(err)
-		Error(w, r)
+	if !validated {
+		redirectTodo(w, r)
 		return
 	}
 
@@ -42,7 +38,7 @@ func ShowItem(w http.ResponseWriter, r *http.Request) {
 	uuid := helpers.GetPath(r)
 	todo := models.FindTodoWithItems(uuid)
 
-	params := paramsStruct{
+	params := templateParam{
 		Token: token,
 		Todo:  todo,
 	}
@@ -50,24 +46,12 @@ func ShowItem(w http.ResponseWriter, r *http.Request) {
 	displayTodoPage(w, params)
 }
 
-// validation for show item
-func validateShowRequest(r *http.Request) error {
-	isUUID := helpers.IsUUID(helpers.GetPath(r))
-
-	if isUUID {
-		return nil
-	}
-
-	return errors.New("パスがuuidではありません")
-}
-
 // CreateItem creates new todo item
 func CreateItem(w http.ResponseWriter, r *http.Request) {
-	err := validateCreateItemRequest(r)
+	validated := validations.ValidateCreateItem(r)
 
-	if err != nil {
-		log.Println(err)
-		Error(w, r)
+	if !validated {
+		redirectTodo(w, r)
 		return
 	}
 
@@ -81,66 +65,32 @@ func CreateItem(w http.ResponseWriter, r *http.Request) {
 	redirectTodo(w, r)
 }
 
-// validation for create item
-func validateCreateItemRequest(r *http.Request) error {
-	name := r.PostFormValue("name")
-	nameIsValidated, _ := regexp.MatchString(`\A[[:^cntrl:]]*\z`, name)
-
-	if !nameIsValidated {
-		return errors.New("不正な入力です")
-	}
-
-	return nil
-}
-
 // EditItemName updates item name
 func EditItemName(w http.ResponseWriter, r *http.Request) {
-	id, err := getID(r)
-	uuid := helpers.GetPath(r)
+	validated := validations.ValidateEditItemName(r)
 
-	if err != nil {
-		log.Println(err)
-		Error(w, r)
+	if !validated {
+		redirectTodo(w, r)
 		return
 	}
 
-	name, err := getItemName(r)
-
-	if err != nil {
-		log.Println(err)
-		Error(w, r)
-		return
-	}
+	id, uuid, name := getID(r), getUUID(r), getItemName(r)
 
 	models.UpdateItemName(id, uuid, name)
 
 	redirectTodo(w, r)
 }
 
-func getItemName(r *http.Request) (name string, err error) {
-	name = r.PostFormValue("name")
-	// 制御文字以外
-	reg := regexp.MustCompilePOSIX(`^[^[:cntrl:]]+$`)
-	matched := reg.MatchString(name)
-
-	if matched {
-		return name, nil
-	}
-
-	err = errors.New("input error")
-	return "", err
-}
-
 // HandleItemDone inverts item done
 func HandleItemDone(w http.ResponseWriter, r *http.Request) {
-	id, err := getID(r)
-	uuid := helpers.GetPath(r)
+	validated := validations.ValidateHandleDone(r)
 
-	if err != nil {
-		log.Println(err)
-		Error(w, r)
+	if !validated {
+		redirectTodo(w, r)
 		return
 	}
+
+	id, uuid := getID(r), getUUID(r)
 
 	models.UpdateItemDone(id, uuid)
 
@@ -149,42 +99,39 @@ func HandleItemDone(w http.ResponseWriter, r *http.Request) {
 
 // DeleteItem deletes item
 func DeleteItem(w http.ResponseWriter, r *http.Request) {
-	// handlerでuuidは確認済
-	id, err := getID(r)
-	uuid := helpers.GetPath(r)
+	validated := validations.ValidateDeleteItem(r)
 
-	if err != nil {
-		log.Println(err)
-		Error(w, r)
+	if !validated {
+		redirectTodo(w, r)
 		return
 	}
 
-	deleteIfExists(id, uuid)
+	id, uuid := getID(r), getUUID(r)
+
+	models.DeleteItem(id, uuid)
 
 	redirectTodo(w, r)
 }
 
 // get id from input
-func getID(r *http.Request) (id int, err error) {
-	id, err = strconv.Atoi(r.PostFormValue("id"))
+func getID(r *http.Request) (id int) {
+	id, _ = strconv.Atoi(r.PostFormValue("id"))
 	return
 }
 
-// confirm whether todo has item or not and delete it if it exits
-func deleteIfExists(id int, uuid string) {
-	todo := models.FindTodoWithItems(uuid)
-	item, found := todo.GetItem(id)
-
-	if found {
-		item.Delete()
-	}
+// get uuid
+func getUUID(r *http.Request) (uuid string) {
+	uuid = helpers.GetPath(r)
+	return
 }
 
+// get name
+func getItemName(r *http.Request) (name string) {
+	name = r.PostFormValue("name")
+	return
+}
+
+// redirect to todo page
 func redirectTodo(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.URL.Path, http.StatusMovedPermanently)
-}
-
-// Error shows error page
-func Error(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "error")
 }

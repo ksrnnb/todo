@@ -8,7 +8,6 @@ import (
 	"models"
 	"session"
 
-	"github.com/google/uuid"
 )
 
 // Index is top page action shows top page
@@ -25,9 +24,6 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 // CreateTodo creates Todo and shows todo page
 func CreateTodo(w http.ResponseWriter, r *http.Request) {
-	uuid := uuid.New().String()
-	todo := models.Todo{UUID: uuid}
-	models.Db.Create(&todo)
-
-	http.Redirect(w, r, "/"+uuid, http.StatusMovedPermanently)
+	todo := models.CreateNewTodo()
+	http.Redirect(w, r, "/"+todo.UUID, http.StatusMovedPermanently)
 }
